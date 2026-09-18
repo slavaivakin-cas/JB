@@ -100,11 +100,10 @@ function render() {
   const groups = NETWORKS.flatMap((network) => ['bidding', 'waterfall'].map((mode) => ({
     network, mode, entries: rows.filter((entry) => entry.network === network && entry.mode === mode)
   }))).filter((group) => group.entries.length);
-  app.innerHTML = `<header class="topbar"><div class="brand"><span class="brand-mark">C</span><span>CAS<span class="brand-dot">.</span>AI</span></div><span class="topbar-divider"></span><h1>Конфигурации</h1></header>
-    <main class="workspace"><div class="table-frame"><table class="configuration-table"><colgroup><col class="col-network"><col class="col-mode"><col class="col-format"><col class="col-mediator"><col class="col-prices"></colgroup>
+  app.innerHTML = `<div class="table-frame"><table class="configuration-table"><colgroup><col class="col-network"><col class="col-mode"><col class="col-format"><col class="col-mediator"><col class="col-prices"></colgroup>
       <thead><tr><th>${filterHeader('network', 'Сеть', NETWORKS.map((value) => [value, value]))}</th><th>${filterHeader('mode', 'Монетизация', [['bidding', 'Bidding'], ['waterfall', 'Waterfall']])}</th><th>${filterHeader('format', 'Формат', FORMATS.map((value) => [value, value]))}</th><th>Медиатор</th><th>Цены · USD CPM</th></tr></thead>
       <tbody>${groups.length ? groups.map(({ network, mode, entries }) => `<tr class="network-row"><th><span class="network-name">${escapeHtml(network)}</span></th><th><span class="mode-tag ${mode}">${modeLabel(mode)}</span></th><td colspan="3"></td></tr>${entries.map(rowMarkup).join('')}`).join('') : `<tr class="no-results"><td colspan="5">Нет конфигураций по выбранным фильтрам. <button type="button" data-action="reset-filters">Сбросить фильтры</button></td></tr>`}</tbody>
-    </table></div></main>`;
+    </table></div>`;
   renderModal();
 }
 
@@ -181,9 +180,14 @@ document.addEventListener('input', (event) => {
 });
 
 document.addEventListener('focusout', (event) => {
-  if (event.target.dataset.field !== 'price' || event.target.value === '') return;
-  const price = Number(event.target.value);
-  if (Number.isFinite(price) && price > 0) event.target.value = price.toFixed(2);
+  if (event.target.dataset.field !== 'price') return;
+  if (event.target.value !== '') {
+    const price = Number(event.target.value);
+    if (Number.isFinite(price) && price > 0) event.target.value = price.toFixed(2);
+  }
+  const entry = findConfig(event.target.dataset.id);
+  const summary = app.querySelector('.format-row.is-expanded .prices');
+  if (entry && summary) summary.innerHTML = priceCell(entry);
 });
 
 document.addEventListener('submit', (event) => {
