@@ -3,9 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#ffFAFA">
-  <title>Apps Management · Конфигурации</title>
-  <link rel="stylesheet" href="table.css">
+  <meta name="theme-color" content="#fffafa">
+  <title>Apps Management · JsonBuilder MVP</title>
+  <link rel="stylesheet" href="table.css?v=20261012a">
+  <link rel="stylesheet" href="app.css?v=20261012a">
+  <link rel="stylesheet" href="preset.css?v=20261012a">
 </head>
 <body>
   <div class="corporate-shell">
@@ -30,11 +32,33 @@
 
     <div class="site-main">
       <div class="site-section-bar"><div class="site-section-title"><strong>Admin</strong><span>Apps Management</span></div><div class="site-stats"><span>9,801 apps</span><i></i><span>1,845 customers</span><i></i><span>5 managers</span></div></div>
-      <main class="configuration-area" aria-label="Настройка конфигураций"><div id="app"></div></main>
+      <main class="configuration-area" aria-label="Прототип JsonBuilder">
+        <section id="list-view" class="view">
+          <div class="view-heading"><div><h1>Приложения</h1><p>Выберите приложение для настройки конфигурации</p></div><div class="list-meta"><span class="role-badge">Admin</span><span id="list-count"></span><span id="client-count"></span></div></div>
+          <div class="app-list-card">
+            <div class="app-list-controls"><label class="search-field"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><input id="app-search" type="search" placeholder="Название, bundle / Store ID, клиент или ID клиента" aria-label="Поиск приложений"></label><select id="manager-filter" aria-label="Фильтр по менеджеру"><option value="all">Все менеджеры</option></select><select id="platform-filter" aria-label="Фильтр по платформе"><option value="all">Все платформы</option><option value="iOS">iOS</option><option value="Android">Android</option></select></div>
+            <div class="app-list-scroll"><table class="app-list-table"><thead><tr><th><button type="button" data-sort="name">Приложение <span class="sort-mark"></span></button></th><th><button type="button" data-sort="platform">Платформа <span class="sort-mark"></span></button></th><th><button type="button" data-sort="clientName">Клиент <span class="sort-mark"></span></button></th><th><button type="button" data-sort="manager">Менеджер <span class="sort-mark"></span></button></th><th><button type="button" data-sort="added">Дата добавления <span class="sort-mark"></span></button></th></tr></thead><tbody id="apps-table-body"></tbody></table></div>
+            <div class="app-list-footer"><span id="list-range"></span><div id="pagination" class="pagination"></div></div>
+          </div>
+        </section>
+
+        <section id="detail-view" class="view" hidden>
+          <div class="detail-topline"><button type="button" class="back-button" id="back-to-list" aria-label="Вернуться к приложениям">←</button><span>Приложения</span><span class="crumb-separator">/</span><strong id="detail-crumb"></strong></div>
+          <div class="detail-header"><div class="detail-title-group"><div id="detail-icon" class="app-icon app-icon-large"></div><div class="detail-title-text"><div class="detail-name-line"><h1 id="detail-name"></h1><span id="detail-platform" class="platform-tag"></span></div><div class="detail-subtitle"><span id="detail-client"></span><span class="dot-separator">·</span><span id="detail-manager"></span></div><button type="button" id="copy-store-id" class="store-id-button" title="Скопировать Store ID"></button></div></div><div class="detail-actions"><button type="button" id="sync-1c" class="action-button">↻ &nbsp;Sync 1C</button><button type="button" id="sync-networks" class="action-button">↻ &nbsp;Sync Networks</button></div></div>
+          <nav class="detail-tabs" aria-label="Разделы приложения"><button type="button" data-detail-tab="overview" class="is-active" aria-selected="true">Основная информация</button><button type="button" data-detail-tab="networks" aria-selected="false">Состав сетей</button><button type="button" data-detail-tab="config" aria-selected="false">Конфигурации</button></nav>
+          <section id="overview-panel" class="detail-panel"></section>
+          <section id="networks-panel" class="detail-panel" hidden></section>
+          <section id="config-panel" class="detail-panel" hidden><div id="preset-app"></div><div id="app"></div><div id="config-actions"></div></section>
+        </section>
+      </main>
     </div>
   </div>
+  <div id="client-modal-root"></div>
+  <div id="preset-dialog-root"></div>
   <div id="modal-root"></div>
   <div id="toast-root" aria-live="polite"></div>
-  <script src="table.js"></script>
+  <script src="table.js?v=20261012a"></script>
+  <script src="preset.js?v=20261012a"></script>
+  <script src="app.js?v=20261012a"></script>
 </body>
 </html>
