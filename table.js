@@ -48,6 +48,9 @@ const state = {
   editingPrice: null,
   modal: null
 };
+const syncedConfigsByKey = new Map();
+const syncErrorsByKey = new Map();
+let currentSyncKey = 'initial';
 
 const app = document.querySelector('#app');
 const modalRoot = document.querySelector('#modal-root');
@@ -65,6 +68,44 @@ const itemCountLabel = (count, mode) => {
   const index = count % 10 === 1 && count % 100 !== 11 ? 0 : count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 12 || count % 100 > 14) ? 1 : 2;
   return `${count} ${forms[index]}`;
 };
+
+function syncedEntry(entry) {
+  return syncedConfigsByKey.get(currentSyncKey)?.find((saved) => saved.id === entry.id);
+}
+
+function unitIsPending(entry, item) {
+  const saved = syncedEntry(entry)?.prices.find((unit) => unit.id === item.id);
+  return !saved || saved.price !== item.price;
+}
+
+function networkChanges(network) {
+  const changes = [];
+  for (const entry of state.configs.filter((item) => item.network === network)) {
+    const savedEntry = syncedEntry(entry);
+    const oldUnits = new Map((savedEntry?.prices || []).map((unit) => [unit.id, unit]));
+    const unitName = entry.mode === 'bidding' ? 'флор' : 'юнит';
+    entry.prices.forEach((unit, index) => {
+      const old = oldUnits.get(unit.id);
+      if (!old) changes.push(`Добавлен ${unitName}: ${entry.format} · №${index + 1} · ${unit.price === '' ? 'цена не указана' : money(unit.price)}`);
+      else if (old.price !== unit.price) changes.push(`Изменена цена: ${entry.format} · №${index + 1} · ${money(old.price)} → ${unit.price === '' ? '—' : money(unit.price)}`);
+      oldUnits.delete(unit.id);
+    });
+    for (const old of oldUnits.values()) changes.push(`Удалён ${unitName}: ${entry.format} · ${old.unitId || 'без ID'} · ${money(old.price)}`);
+    if (savedEntry && savedEntry.mediator !== entry.mediator) changes.push(`Изменён медиатор: ${entry.format} · ${savedEntry.mediator} → ${entry.mediator}`);
+  }
+  return changes;
+}
+
+function syncIndicatorMarkup(network, mode) {
+  const changes = networkChanges(network);
+  const error = syncErrorsByKey.get(currentSyncKey)?.get(network);
+  const status = error ? 'error' : changes.length ? 'pending' : 'ok';
+  const label = { error: 'Ошибка', pending: 'Есть изменения', ok: 'OK' }[status];
+  const title = { error: 'Ошибка синхронизации', pending: 'Требуется синхронизация', ok: 'Синхронизировано' }[status];
+  const details = [...(error ? [error] : []), ...changes];
+  const summary = details.length ? details.slice(0, 5).map((detail) => `<span>${escapeHtml(detail)}</span>`).join('') + (details.length > 5 ? `<span>И ещё ${details.length - 5} изменений</span>` : '') : '<span>Нет изменений для синхронизации.</span>';
+  return `<button type="button" class="sync-indicator sync-${status}" data-action="sync-status" aria-label="${escapeHtml(network)}: ${label}" aria-describedby="${groupPanelId(network, mode)}-sync"><span class="sync-dot" aria-hidden="true"></span><span>${label}</span><span class="sync-tooltip" id="${groupPanelId(network, mode)}-sync" role="tooltip"><strong>${title}</strong><span class="sync-tooltip-lines">${summary}</span></span></button>`;
+}
 
 function visibleRows() {
   return state.configs.filter((entry) =>
@@ -91,7 +132,10 @@ function priceCell(entry) {
   const key = groupKey(entry.network, entry.mode);
   const expanded = state.expandedGroup === key;
   const panelId = groupPanelId(entry.network, entry.mode);
-  const chips = priced.slice(0, 4).map((item) => `<button type="button" class="price-chip ${entry.mode === 'bidding' ? 'floor-chip' : ''}" data-action="toggle-group" data-group="${escapeHtml(key)}" data-price-id="${item.id}" aria-expanded="${expanded}" aria-controls="${panelId}" aria-label="${expanded ? 'Свернуть' : 'Показать'} все форматы ${escapeHtml(entry.network)}: ${money(item.price)}">${money(item.price)}</button>`).join('');
+  const chips = priced.slice(0, 4).map((item) => {
+    const pending = unitIsPending(entry, item);
+    return `<button type="button" class="price-chip ${entry.mode === 'bidding' ? 'floor-chip' : ''} ${pending ? 'is-pending' : ''}" data-action="toggle-group" data-group="${escapeHtml(key)}" data-price-id="${item.id}" aria-expanded="${expanded}" aria-controls="${panelId}" aria-label="${expanded ? 'Свернуть' : 'Показать'} все форматы ${escapeHtml(entry.network)}: ${money(item.price)}${pending ? ', не синхронизировано' : ''}">${money(item.price)}</button>`;
+  }).join('');
   const extra = priced.length > 4 ? `<button type="button" class="more-chip" data-action="toggle-group" data-group="${escapeHtml(key)}" aria-expanded="${expanded}" aria-controls="${panelId}" aria-label="${expanded ? 'Свернуть' : `Показать ещё ${itemCountLabel(priced.length - 4, entry.mode)} и все форматы`}">+${priced.length - 4}</button>` : '';
   return `<div class="prices">${chips ? chips + extra : `<button type="button" class="empty-open" data-action="toggle-group" data-group="${escapeHtml(key)}" aria-expanded="${expanded}" aria-controls="${panelId}">${entry.mode === 'bidding' ? 'Без флоров' : 'Нет юнитов'} <span aria-hidden="true">⌄</span></button>`}</div>`;
 }
@@ -106,7 +150,8 @@ const unitIcons = {
 function unitRowMarkup(entry, item, index) {
   const editing = state.editingPrice?.configId === entry.id && state.editingPrice.priceId === item.id;
   const unitLabel = entry.mode === 'bidding' ? 'флор' : 'юнит';
-  return `<div class="unit-row ${editing ? 'is-editing' : ''}" data-price-id="${item.id}"><span class="unit-label">№${index + 1}</span><span class="unit-id-field ${item.unitId ? '' : 'is-empty'}" title="${item.unitId ? escapeHtml(item.unitId) : 'unit_id ещё не назначен'}">${item.unitId ? escapeHtml(item.unitId) : '—'}</span><div class="unit-price-field ${editing ? 'is-editing' : 'is-locked'}"><span>x</span>${editing ? `<input type="number" min="0.01" step="0.01" inputmode="decimal" required value="${item.price === '' ? '' : Number(item.price).toFixed(2)}" placeholder="0.00" aria-label="Мультипликатор ${entry.network}, ${entry.format}, №${index + 1}" data-field="price" data-id="${entry.id}" data-price-id="${item.id}">` : `<span class="unit-price-value">${item.price === '' ? '—' : Number(item.price).toFixed(2)}</span>`}</div>${editing ? `<button type="button" class="unit-action unit-save" data-action="save-price" data-id="${entry.id}" data-price-id="${item.id}" aria-label="Сохранить цену ${unitLabel}а №${index + 1}" title="Сохранить">${unitIcons.save}</button><button type="button" class="unit-action unit-cancel" data-action="cancel-price" data-id="${entry.id}" data-price-id="${item.id}" aria-label="Отменить правку ${unitLabel}а №${index + 1}" title="Отменить">${unitIcons.cancel}</button>` : `<button type="button" class="unit-action unit-edit" data-action="edit-price" data-id="${entry.id}" data-price-id="${item.id}" aria-label="Изменить цену ${unitLabel}а №${index + 1}" title="Изменить цену">${unitIcons.edit}</button><button type="button" class="unit-action unit-delete" data-action="remove-item" data-id="${entry.id}" data-price-id="${item.id}" aria-label="Удалить ${unitLabel} №${index + 1}" title="Удалить">${unitIcons.delete}</button>`}</div>`;
+  const pending = unitIsPending(entry, item);
+  return `<div class="unit-row ${editing ? 'is-editing' : ''} ${pending ? 'is-pending' : ''}" data-price-id="${item.id}"><span class="unit-label">№${index + 1}</span><span class="unit-id-field ${item.unitId ? '' : 'is-empty'}" title="${item.unitId ? escapeHtml(item.unitId) : 'unit_id ещё не назначен'}">${item.unitId ? escapeHtml(item.unitId) : '—'}</span><div class="unit-price-field ${editing ? 'is-editing' : 'is-locked'}"><span>x</span>${editing ? `<input type="number" min="0.01" step="0.01" inputmode="decimal" required value="${item.price === '' ? '' : Number(item.price).toFixed(2)}" placeholder="0.00" aria-label="Мультипликатор ${entry.network}, ${entry.format}, №${index + 1}" data-field="price" data-id="${entry.id}" data-price-id="${item.id}">` : `<span class="unit-price-value">${item.price === '' ? '—' : Number(item.price).toFixed(2)}</span>`}</div>${editing ? `<button type="button" class="unit-action unit-save" data-action="save-price" data-id="${entry.id}" data-price-id="${item.id}" aria-label="Сохранить цену ${unitLabel}а №${index + 1}" title="Сохранить">${unitIcons.save}</button><button type="button" class="unit-action unit-cancel" data-action="cancel-price" data-id="${entry.id}" data-price-id="${item.id}" aria-label="Отменить правку ${unitLabel}а №${index + 1}" title="Отменить">${unitIcons.cancel}</button>` : `<button type="button" class="unit-action unit-edit" data-action="edit-price" data-id="${entry.id}" data-price-id="${item.id}" aria-label="Изменить цену ${unitLabel}а №${index + 1}" title="Изменить цену">${unitIcons.edit}</button><button type="button" class="unit-action unit-delete" data-action="remove-item" data-id="${entry.id}" data-price-id="${item.id}" aria-label="Удалить ${unitLabel} №${index + 1}" title="Удалить">${unitIcons.delete}</button>`}</div>`;
 }
 
 function unitFormatMarkup(entry) {
@@ -136,7 +181,7 @@ function render() {
   }))).filter((group) => group.entries.length);
   app.innerHTML = `<div class="table-frame"><table class="configuration-table"><colgroup><col class="col-network"><col class="col-mode"><col class="col-format"><col class="col-mediator"><col class="col-prices"></colgroup>
       <thead><tr><th>${filterHeader('network', 'Сеть', networkNames.filter((value) => state.allowedNetworks === null || state.allowedNetworks.has(value)).map((value) => [value, value]))}</th><th>${filterHeader('mode', 'Монетизация', [['bidding', 'Bidding'], ['waterfall', 'Waterfall']])}</th><th>${filterHeader('format', 'Формат', formatNames.map((value) => [value, value]))}</th><th>Медиатор</th><th>Мультипликаторы</th></tr></thead>
-      <tbody>${groups.length ? groups.map(({ network, mode, entries }) => { const key = groupKey(network, mode); const expanded = state.expandedGroup === key; return `<tr class="network-row ${expanded ? 'is-expanded' : ''}" data-action="toggle-group" data-group="${escapeHtml(key)}" tabindex="0" aria-expanded="${expanded}" aria-controls="${groupPanelId(network, mode)}"><th><span class="network-name">${escapeHtml(network)}</span>${state.networkStatuses[network] ? `<span class="table-status status-${state.networkStatuses[network]}">${escapeHtml(({active:'Активно',disabled:'Отключено',noSdk:'Нет SDK',noAdUnit:'Нет AdUnit'})[state.networkStatuses[network]] || '')}</span>` : ''}</th><th><span class="mode-tag ${mode}">${modeLabel(mode)}</span></th><td colspan="3"><span class="network-expand" aria-hidden="true">⌄</span></td></tr>${entries.map(rowMarkup).join('')}${expandedMarkup(network, mode)}`; }).join('') : `<tr class="no-results"><td colspan="5">Нет конфигураций по выбранным фильтрам. <button type="button" data-action="reset-filters">Сбросить фильтры</button></td></tr>`}</tbody>
+      <tbody>${groups.length ? groups.map(({ network, mode, entries }) => { const key = groupKey(network, mode); const expanded = state.expandedGroup === key; return `<tr class="network-row ${expanded ? 'is-expanded' : ''}" data-action="toggle-group" data-group="${escapeHtml(key)}" tabindex="0" aria-expanded="${expanded}" aria-controls="${groupPanelId(network, mode)}"><th><span class="network-name">${escapeHtml(network)}</span>${state.networkStatuses[network] ? `<span class="table-status status-${state.networkStatuses[network]}">${escapeHtml(({active:'Активно',disabled:'Отключено',noSdk:'Нет SDK',noAdUnit:'Нет AdUnit'})[state.networkStatuses[network]] || '')}</span>` : ''}</th><th><span class="mode-tag ${mode}">${modeLabel(mode)}</span></th><td colspan="3"><div class="network-row-right">${syncIndicatorMarkup(network, mode)}<span class="network-expand" aria-hidden="true">⌄</span></div></td></tr>${entries.map(rowMarkup).join('')}${expandedMarkup(network, mode)}`; }).join('') : `<tr class="no-results"><td colspan="5">Нет конфигураций по выбранным фильтрам. <button type="button" data-action="reset-filters">Сбросить фильтры</button></td></tr>`}</tbody>
     </table></div>`;
   renderModal();
 }
@@ -286,11 +331,14 @@ document.addEventListener('keydown', (event) => {
 const initialConfigs = structuredClone(state.configs);
 const configsByApp = new Map();
 const configsByPreset = new Map();
+syncedConfigsByKey.set('initial', structuredClone(initialConfigs));
 
 window.configTable = {
   setApp(appId, networkNames) {
     cancelPriceEdit();
     if (!configsByApp.has(appId)) configsByApp.set(appId, structuredClone(initialConfigs));
+    currentSyncKey = `${appId}::standalone`;
+    if (!syncedConfigsByKey.has(currentSyncKey)) syncedConfigsByKey.set(currentSyncKey, structuredClone(configsByApp.get(appId)));
     state.configs = configsByApp.get(appId);
     state.allowedNetworks = new Set(networkNames);
     state.filters = { network: 'all', mode: 'all', format: 'all' };
@@ -311,6 +359,9 @@ window.configTable = {
     cancelPriceEdit();
     const key = `${appId}::${presetId}`;
     if (!configsByPreset.has(key)) configsByPreset.set(key, structuredClone(configs));
+    if (!syncedConfigsByKey.has(key)) syncedConfigsByKey.set(key, structuredClone(configsByPreset.get(key)));
+    if (!syncErrorsByKey.has(key)) syncErrorsByKey.set(key, new Map(presetId === 'cas-mediation' ? [['Chartboost', 'Не удалось синхронизироваться с сетью Chartboost. Последняя попытка завершилась ошибкой.']] : []));
+    currentSyncKey = key;
     state.configs = configsByPreset.get(key);
     state.allowedNetworks = null;
     state.formatSelections = structuredClone(formatsByNetwork);
@@ -337,6 +388,41 @@ window.configTable = {
   },
   getSnapshot() {
     return structuredClone(state.configs);
+  },
+  syncNetworks() {
+    if (state.editingPrice) {
+      const { configId, priceId } = state.editingPrice;
+      const input = app.querySelector(`.unit-price-field input[data-id="${configId}"][data-price-id="${priceId}"]`);
+      if (input && !input.checkValidity()) {
+        const network = findConfig(configId)?.network;
+        const errors = syncErrorsByKey.get(currentSyncKey) || new Map();
+        errors.set(network, 'Не удалось перенести цены: у юнита не указан мультипликатор.');
+        syncErrorsByKey.set(currentSyncKey, errors);
+        render();
+        return { failed: 1 };
+      }
+      if (input) savePriceEdit();
+    }
+    const synced = syncedConfigsByKey.get(currentSyncKey) || [];
+    const errors = syncErrorsByKey.get(currentSyncKey) || new Map();
+    let failed = 0;
+    for (const network of new Set(state.configs.map((entry) => entry.network))) {
+      const entries = state.configs.filter((entry) => entry.network === network);
+      const incomplete = entries.find((entry) => entry.prices.some((unit) => !(Number(unit.price) > 0)));
+      if (incomplete) {
+        errors.set(network, `Не удалось перенести цены: ${incomplete.format} — у юнита не указан мультипликатор.`);
+        failed++;
+        continue;
+      }
+      entries.forEach((entry) => entry.prices.forEach((unit) => { if (!unit.unitId) unit.unitId = String(nextUnitNumber++); }));
+      for (let index = synced.length - 1; index >= 0; index--) if (synced[index].network === network) synced.splice(index, 1);
+      synced.push(...structuredClone(entries));
+      errors.delete(network);
+    }
+    syncedConfigsByKey.set(currentSyncKey, synced);
+    syncErrorsByKey.set(currentSyncKey, errors);
+    render();
+    return { failed };
   },
   ensureNetworkUnits(appId, presetId, networkName, formats) {
     const configs = configsByPreset.get(`${appId}::${presetId}`);

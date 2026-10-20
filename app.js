@@ -263,8 +263,12 @@ document.addEventListener('click', (event) => {
     setTimeout(() => {
       syncButton.disabled = false;
       syncButton.innerHTML = original;
-      if (isNetworkSync) { app.lastNetworkSync = 'Только что'; renderNetworks(app); }
-      showUiToast(isNetworkSync ? 'Данные сетей обновлены (демо)' : 'Данные 1С обновлены (демо)');
+      if (isNetworkSync) {
+        const result = window.configTable.syncNetworks();
+        if (!result.failed) app.lastNetworkSync = 'Только что';
+        renderNetworks(app);
+        showUiToast(result.failed ? `Не удалось синхронизировать ${result.failed} сетей (демо)` : 'Данные сетей обновлены (демо)');
+      } else showUiToast('Данные 1С обновлены (демо)');
     }, 600);
   }
 });
