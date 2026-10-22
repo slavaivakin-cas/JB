@@ -57,10 +57,12 @@
 .app-icon-large{width:51px;height:51px;border-radius:12px;font-size:25px}
 .detail-title-text{min-width:0}.detail-name-line{display:flex;align-items:center;gap:8px;min-width:0}
 .detail-title-text h1{overflow:hidden;max-width:min(700px,50vw);font-size:21px;line-height:1.2;text-overflow:ellipsis;white-space:nowrap}
+.detail-store-alert{flex:none;padding:4px 7px;border:1px solid #e7b5b4;border-radius:12px;background:#fde9e8;color:#b8393e;font-size:10px;font-weight:700;white-space:nowrap}
+.detail-store-alert[hidden]{display:none}
 .platform-tag{padding:4px 7px;border-radius:12px;background:#f0efec;color:#616366;font-size:10px;white-space:nowrap}
 .detail-subtitle{display:flex;align-items:center;gap:6px;margin-top:5px;color:#777b7e;font-size:11px}
 .dot-separator{color:#b1ada9}
-.store-id-button{margin-top:7px;padding:0;border:0;background:transparent;color:#777b7e;font:10px Consolas,Monaco,monospace;text-align:left}.store-id-button:hover{color:#6e7a0c;text-decoration:underline}
+.detail-identifiers{display:flex;flex-wrap:wrap;gap:5px 13px;margin-top:7px}.store-id-button{padding:0;border:0;background:transparent;color:#777b7e;font:10px Consolas,Monaco,monospace;text-align:left;overflow-wrap:anywhere}.store-id-button:hover{color:#6e7a0c;text-decoration:underline}
 .detail-actions{display:flex;align-items:center;gap:8px;flex:none}
 .action-button{height:34px;padding:0 11px;border:1px solid #c7c2bf;border-radius:7px;background:#fffafa;color:#474846;font-size:11px;font-weight:700;white-space:nowrap}.action-button:hover{border-color:#cbda3e;background:#f7f9df}.action-button:disabled{opacity:.55;cursor:wait}
 .detail-tabs{display:flex;align-items:end;gap:16px;min-height:47px;margin-bottom:16px;border-bottom:1px solid #c7c2bf}
@@ -68,6 +70,17 @@
 .detail-tabs button:hover{color:#25221f}.detail-tabs button.is-active{border-bottom-color:#cbda3e;color:#25221f}
 .detail-panel{min-height:280px}
 .detail-panel .table-frame{border-radius:10px}
+
+.waterfall-card{max-width:1060px;overflow:hidden;border:1px solid #d4d0cc;border-radius:10px;background:#fffafa}
+.waterfall-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;padding:17px 19px;border-bottom:1px solid #e5e1dd}.waterfall-toolbar h2{margin:0 0 4px;font-size:17px}.waterfall-toolbar p{margin:0;color:#777b7e;font-size:11px}.waterfall-country-tabs{flex:1 1 230px;justify-content:center}
+.waterfall-filter{display:flex;align-items:center;gap:9px;color:#777b7e;font-size:11px;font-weight:700;white-space:nowrap}.waterfall-filter select{min-width:150px;height:33px;padding:0 9px;border:1px solid #c7c2bf;border-radius:6px;background:#fff;color:#25221f;font-size:11px}
+.waterfall-legend{display:flex;flex-wrap:wrap;gap:13px;padding:8px 19px;border-bottom:1px solid #eeeae6;color:#8b8984;font-size:10px}.waterfall-legend span{display:inline-flex;align-items:center;gap:5px}.waterfall-legend i{width:8px;height:8px;border-radius:50%}.waterfall-legend .legend-pending{background:#e8c66c}.waterfall-legend .legend-paused{background:#c5c2bd}
+.waterfall-format{padding:16px 19px 20px;border-bottom:1px solid #e5e1dd}.waterfall-format:last-child{border-bottom:0}
+.waterfall-mode-head{display:flex;align-items:center;gap:10px;margin:13px 0 7px;color:#616366;font-size:11px}.waterfall-mode-head strong{color:#25221f}.waterfall-mode-head span{color:#9a9791}.waterfall-mode-head.bidding{margin-top:18px}
+.waterfall-steps{max-width:950px;border:1px solid #e1ddda;border-radius:7px;overflow:hidden}.waterfall-step{display:grid;grid-template-columns:43px minmax(0,1fr) 145px 150px;align-items:center;gap:11px;min-height:48px;padding:6px 12px;border-bottom:1px solid #eeeae6;font-size:11px}.waterfall-step:last-child{border-bottom:0}.waterfall-step:nth-child(even){background:#fdfcfa}.waterfall-step-number{color:#9a9791;font-weight:700}.waterfall-step-source{min-width:0}.waterfall-step-source strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.waterfall-step-source small{display:block;margin-top:2px;overflow:hidden;color:#9a9791;font:10px Consolas,Monaco,monospace;text-overflow:ellipsis;white-space:nowrap}.waterfall-step-price{text-align:right;font-size:12px}.waterfall-step-price strong,.waterfall-step-price small{display:block}.waterfall-step-price small{margin-top:2px;color:#918d87;font-size:10px;font-weight:400;white-space:nowrap}.waterfall-step-status{text-align:right;color:#8c8983;font-size:10px}
+.waterfall-step.is-pending,.waterfall-step.is-pending:nth-child(even){background:#fff8e4}.waterfall-step.is-pending .waterfall-step-price,.waterfall-step.is-pending .waterfall-step-status{color:#956300}.waterfall-step.is-paused,.waterfall-step.is-paused:nth-child(even){background:#f3f2f0;color:#9a9791}.waterfall-step.is-paused .waterfall-step-price{text-decoration:line-through}.waterfall-empty{padding:18px 12px;border:1px dashed #dedad6;border-radius:7px;color:#9a9791;font-size:11px}
+
+.technical-card{max-width:950px;padding:16px;border:1px solid #d4d0cc;border-radius:10px;background:#fffafa}.technical-note{border:1px solid #e1ddda;border-radius:8px;background:#fff;overflow:hidden}.technical-note h3{margin:0;padding:14px 15px 0;font-size:14px}.technical-note p{margin:5px 15px 13px;color:#777b7e;font-size:11px}.technical-scroll{max-height:540px;overflow:auto}.technical-table{width:100%;border-collapse:collapse;text-align:left;font-size:11px}.technical-table th{position:sticky;top:0;padding:9px 15px;border-top:1px solid #e8e4e0;border-bottom:1px solid #dcd7d2;background:#f7f6f4;color:#777b7e;font-size:10px;text-transform:uppercase}.technical-table td{padding:7px 15px;border-bottom:1px solid #eeeae6}.technical-table tr:last-child td{border-bottom:0}.technical-table tr.is-selected-country{background:#fbfce9}.technical-table td:first-child{width:130px;font-weight:700}.technical-table td:nth-child(2){width:220px}.technical-price-field{display:inline-flex;align-items:center;width:92px;height:29px;border:1px solid #c7c2bf;border-radius:5px;background:#fff}.technical-price-field span{padding-left:8px;color:#777b7e}.technical-price-field input{width:100%;min-width:0;padding:0 8px 0 2px;border:0;background:transparent;color:#25221f;font-size:11px;text-align:right}.technical-price-field:focus-within{outline:2px solid #c5d624;outline-offset:1px}.technical-price-field input:focus{outline:0}
 
 .info-card,.networks-card{padding:14px 16px}
 .info-card{max-width:950px}
@@ -84,6 +97,11 @@
 .store-list,.placement-list{display:flex;flex-wrap:wrap;gap:6px}
 .store-chip,.placement-chip{display:inline-flex;align-items:center;min-height:22px;padding:3px 8px;border:1px solid #e1ddda;border-radius:14px;background:#f4f2f0;color:#9a9791;font-size:10px;text-decoration:none}
 .store-chip.is-active{border-color:#d5e048;background:#edf4b6;color:#353a04;font-weight:700}.store-chip.is-active:hover{background:#e4f222}
+.store-chip.is-current{border-color:#9bd8b2;background:#e8f6ed;color:#17855b;font-weight:700;cursor:pointer}.store-chip.is-current:hover{background:#daf2e3}
+.store-chip.has-bundle{border-color:#77c596;background:#fffafa;color:#257d55;font-weight:700;cursor:pointer}.store-chip.has-bundle:hover{background:#eaf8ef}
+.store-chip.is-unavailable{border-color:#e7b5b4;background:#fde9e8;color:#b8393e;font-weight:700;cursor:help}
+.admob-account{padding:0;border:0;background:transparent;color:#25221f;font-size:12px;font-weight:700;text-align:left;cursor:pointer}.admob-account:hover{color:#6e7a0c;text-decoration:underline}
+.last-edited{justify-self:end;text-align:right}.last-edited small{color:#9a9791;font-size:10px}
 .placement-chip.is-active{border-color:#c7c2bf;background:#25221f;color:#fff}
 .info-divider{grid-column:1/-1;height:1px;background:#e4e0dc;margin:-3px 0}
 
@@ -93,7 +111,11 @@
 .networks-table{min-width:920px}
 .networks-table th{height:39px;text-transform:uppercase;font-size:10px}
 .networks-table td{height:58px;padding:7px 12px;border-top:1px solid #e6e2df;color:#25221f;font-size:11px;vertical-align:middle}
+.account-select.is-placeholder{color:#9a9791}
+.connection-status{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:13px;font-size:10px;font-weight:700;white-space:nowrap}.connection-status i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.connection-ok{background:#e5f4ec;color:#148466}.connection-pending{background:#fff2cf;color:#966400}.connection-working{background:#e8f7b9;color:#537800}.connection-off{background:#efedeb;color:#777b7e}
 .network-name-cell strong{display:block;font-size:12px}.network-name-cell small{display:block;margin-top:3px;color:#9a9791;font-size:10px}
+.network-mode{display:inline-block;margin-right:6px;color:#777b7e;font-weight:700}
 .networks-table tr.is-disabled{background:#f9f8f6}.networks-table tr.is-disabled .network-name-cell strong{color:#777b7e}
 .toggle-switch{position:relative;width:34px;height:19px;padding:0;border:0;border-radius:10px;background:#d4d0cc;vertical-align:middle}
 .toggle-switch::after{content:"";position:absolute;top:3px;left:3px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 2px #0002;transition:transform .15s ease}
@@ -111,3 +133,4 @@
 @media(max-width:1100px){.app-list-table{min-width:900px}.info-grid{max-width:690px;grid-template-columns:repeat(3,minmax(0,1fr))}.detail-title-text h1{max-width:40vw}}
 @media(max-width:760px){.view-heading{align-items:start;flex-direction:column;gap:9px}.app-list-controls{flex-wrap:wrap}.search-field{flex-basis:100%}.app-list-controls select{flex:1;min-width:140px}.detail-header{align-items:start;flex-direction:column}.detail-actions{padding-left:64px}.detail-title-text h1{max-width:62vw;font-size:17px}.detail-tabs{gap:7px;overflow-x:auto}.detail-tabs button{font-size:11px}.info-card{padding:12px}.info-grid{max-width:480px;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.networks-card .card-heading{align-items:start;flex-direction:column;gap:5px}}
 @media(max-width:540px){.info-grid{grid-template-columns:1fr}.info-field.wide,.info-divider{grid-column:1}.list-meta{flex-wrap:wrap;gap:7px}.detail-actions{padding-left:0;width:100%}.detail-actions .action-button{flex:1}.app-icon-large{width:43px;height:43px}.detail-title-text h1{max-width:58vw}.detail-title-group{gap:8px}}
+@media(max-width:540px){.waterfall-toolbar{align-items:flex-start;flex-direction:column}.waterfall-country-tabs{width:100%;justify-content:flex-start}.waterfall-format{padding:13px 11px}.waterfall-step{grid-template-columns:27px minmax(0,1fr) 110px;gap:5px;padding:7px}.waterfall-step-price small{white-space:normal;font-size:9px}.waterfall-step-status{grid-column:2/-1;text-align:left}}

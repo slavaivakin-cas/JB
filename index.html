@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#fffafa">
   <title>Apps Management · JsonBuilder MVP</title>
-  <link rel="stylesheet" href="table.css?v=20261020a">
-  <link rel="stylesheet" href="app.css?v=20261020a">
-  <link rel="stylesheet" href="preset.css?v=20261020a">
+  <link rel="stylesheet" href="table.css?v=20261022c">
+  <link rel="stylesheet" href="app.css?v=20261022c">
+  <link rel="stylesheet" href="preset.css?v=20261022j">
 </head>
 <body>
   <div class="corporate-shell">
@@ -44,21 +44,25 @@
 
         <section id="detail-view" class="view" hidden>
           <div class="detail-topline"><button type="button" class="back-button" id="back-to-list" aria-label="Вернуться к приложениям">←</button><span>Приложения</span><span class="crumb-separator">/</span><strong id="detail-crumb"></strong></div>
-          <div class="detail-header"><div class="detail-title-group"><div id="detail-icon" class="app-icon app-icon-large"></div><div class="detail-title-text"><div class="detail-name-line"><h1 id="detail-name"></h1><span id="detail-platform" class="platform-tag"></span></div><div class="detail-subtitle"><span id="detail-client"></span><span class="dot-separator">·</span><span id="detail-manager"></span></div><button type="button" id="copy-store-id" class="store-id-button" title="Скопировать Store ID"></button></div></div><div class="detail-actions"><button type="button" id="sync-1c" class="action-button">↻ &nbsp;Sync 1C</button><button type="button" id="sync-networks" class="action-button">↻ &nbsp;Sync Networks</button></div></div>
-          <nav class="detail-tabs" aria-label="Разделы приложения"><button type="button" data-detail-tab="overview" class="is-active" aria-selected="true">Основная информация</button><button type="button" data-detail-tab="networks" aria-selected="false">Состав сетей</button><button type="button" data-detail-tab="config" aria-selected="false">Конфигурации</button></nav>
+          <div class="detail-header"><div class="detail-title-group"><div id="detail-icon" class="app-icon app-icon-large"></div><div class="detail-title-text"><div class="detail-name-line"><h1 id="detail-name"></h1><span id="detail-platform" class="platform-tag"></span><span id="detail-store-alert" class="detail-store-alert" title="Приложение не в сторе" hidden>Не в Store</span></div><div class="detail-subtitle"><span id="detail-client"></span><span class="dot-separator">·</span><span id="detail-manager"></span></div><div id="detail-identifiers" class="detail-identifiers"></div></div></div><div class="detail-actions"><button type="button" id="sync-1c" class="action-button">↻ &nbsp;Sync 1C</button><button type="button" id="sync-networks" class="action-button">↻ &nbsp;Sync Networks</button></div></div>
+          <nav class="detail-tabs" aria-label="Разделы приложения"><button type="button" data-detail-tab="overview" class="is-active" aria-selected="true">Основная информация</button><button type="button" data-detail-tab="config" aria-selected="false">Конфигурации</button><button type="button" data-detail-tab="networks" aria-selected="false">Состав сетей</button><button type="button" data-detail-tab="waterfall" aria-selected="false">Водопад</button><button type="button" data-detail-tab="technical" aria-selected="false">Техническое</button></nav>
           <section id="overview-panel" class="detail-panel"></section>
+          <section id="config-panel" class="detail-panel" hidden><div id="preset-app"></div><div id="country-bar"></div><div id="app"></div><div id="config-actions"></div></section>
           <section id="networks-panel" class="detail-panel" hidden></section>
-          <section id="config-panel" class="detail-panel" hidden><div id="preset-app"></div><div id="app"></div><div id="config-actions"></div></section>
+          <section id="waterfall-panel" class="detail-panel" hidden></section>
+          <section id="technical-panel" class="detail-panel" hidden></section>
         </section>
       </main>
     </div>
   </div>
   <div id="client-modal-root"></div>
   <div id="preset-dialog-root"></div>
+  <div id="country-dialog-root"></div>
   <div id="modal-root"></div>
   <div id="toast-root" aria-live="polite"></div>
-  <script src="table.js?v=20261020a"></script>
-  <script src="preset.js?v=20261020a"></script>
-  <script src="app.js?v=20261020a"></script>
+  <script src="table.js?v=20261022l"></script>
+  <script src="preset-data.js?v=20261022c"></script>
+  <script src="preset.js?v=20261022l"></script>
+  <script src="app.js?v=20261022l"></script>
 </body>
 </html>
