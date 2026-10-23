@@ -145,7 +145,7 @@ function renderOverview(app) {
     <div class="info-field"><span class="info-label">Client name</span><button type="button" class="copy-inline" data-client="${uiEscape(app.client.id)}">${uiEscape(app.client.name)} ↗</button></div>
     <div class="info-field"><span class="info-label">Client contact</span><button type="button" class="copy-inline" data-copy="${uiEscape(app.client.contact)}">${uiEscape(app.client.contact)} ⧉</button></div>
     <div class="info-divider"></div>
-    <div class="info-field"><span class="info-label">AdMob Account</span><button type="button" class="admob-account" data-copy="${uiEscape(app.bundleId)}" title="Bundle: ${uiEscape(app.bundleId)} · нажмите, чтобы скопировать">${uiEscape(app.admobAccount)} ⧉</button></div>
+    <div class="info-field"><span class="info-label">AdMob Account</span><button type="button" class="admob-account" data-copy="${uiEscape(app.admobAppId)}" title="${uiEscape(app.admobAppId)}">${uiEscape(app.admobAccount)} ⧉</button></div>
     <div class="info-field"><span class="info-label">1С ID</span><div class="info-value monospace">${uiEscape(app.oneCId)}</div></div>
     <div class="info-field"><span class="info-label">Менеджер приложения</span><div class="info-value">${uiEscape(app.manager)}</div></div>
     <div class="info-field"><span class="info-label">CAS version</span><div class="info-value">${uiEscape(app.casVersion)}</div></div>
@@ -168,28 +168,13 @@ function renderNetworks(app) {
 
 const TECHNICAL_PLACEMENT_NAMES = { Banner_native: 'Banner Native', Mrec: 'MREC', Mrec_native: 'MREC Native', App_open: 'App Open' };
 const TECHNICAL_FORMAT_ORDER = ['Banner', 'Banner Native', 'Interstitial', 'Rewarded', 'MREC', 'MREC Native', 'App Open', 'Native'];
-function technicalStore(app) {
-  if (!app.technicalBasePrices) {
-    let saved = null;
-    try { saved = JSON.parse(window.localStorage?.getItem(`cas-prototype-technical:${app.id}`) || 'null'); } catch { /* Browser storage may be unavailable for a local file. */ }
-    app.technicalBasePrices = saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {};
-  }
-  return app.technicalBasePrices;
-}
-function saveTechnicalStore(app) {
-  try { window.localStorage?.setItem(`cas-prototype-technical:${app.id}`, JSON.stringify(technicalStore(app))); } catch { /* Keep the current session usable without storage. */ }
-}
 function technicalFormats(app) {
   const configured = window.configTable.getWaterfallData().formats;
   const formats = configured.length ? configured : app.placements.map((format) => TECHNICAL_PLACEMENT_NAMES[format] || format);
   return [...new Set(formats)].sort((a, b) => TECHNICAL_FORMAT_ORDER.indexOf(a) - TECHNICAL_FORMAT_ORDER.indexOf(b));
 }
 function basePricesFor(app, country, formats = technicalFormats(app)) {
-  const saved = technicalStore(app)[country] || {};
-  return Object.fromEntries(formats.map((format) => {
-    const price = Number(saved[format]);
-    return [format, Number.isFinite(price) && price > 0 ? price : 1];
-  }));
+  return Object.fromEntries(formats.map((format) => [format, 1]));
 }
 function renderTechnical(app) {
   const { countries, selected } = window.presetUI.countrySelection(app);
@@ -197,9 +182,9 @@ function renderTechnical(app) {
   const pricesByCountry = Object.fromEntries(countries.map((country) => [country, basePricesFor(app, country, formats)]));
   const rows = countries.flatMap((country) => formats.map((format) => {
     const price = pricesByCountry[country][format];
-    return `<tr class="${country === selected ? 'is-selected-country' : ''}"><td>${country === 'GLOBAL' ? 'Global' : uiEscape(country)}</td><td>${uiEscape(format)}</td><td><label class="technical-price-field"><span>$</span><input type="number" min="0.01" step="0.01" inputmode="decimal" value="${price.toFixed(2)}" data-technical-price data-country="${uiEscape(country)}" data-format="${uiEscape(format)}" aria-label="Базовая цена ${uiEscape(country)} · ${uiEscape(format)}"></label></td></tr>`;
+    return `<tr class="${country === selected ? 'is-selected-country' : ''}"><td>${country === 'GLOBAL' ? 'Global' : uiEscape(country)}</td><td>${uiEscape(format)}</td><td><span class="technical-price-value">$${price.toFixed(2)}</span></td></tr>`;
   })).join('');
-  document.querySelector('#technical-panel').innerHTML = `<div class="technical-card"><div class="card-heading"><h2>Техническое</h2><p>Справочные данные для расчёта водопада</p></div><section class="technical-note"><h3>Базовая цена для AdMob из 1С</h3><p>Для коэффициентов x итоговая цена равна базовой цене страны и формата, умноженной на x. Начальное значение — $1.00.</p><div class="technical-scroll"><table class="technical-table"><thead><tr><th>Страна</th><th>Формат</th><th>Цена</th></tr></thead><tbody>${rows || '<tr><td colspan="3">Форматы приложения пока не указаны</td></tr>'}</tbody></table></div></section></div>`;
+  document.querySelector('#technical-panel').innerHTML = `<div class="technical-card"><div class="card-heading"><h2>Техническое</h2></div><p class="technical-disclaimer">Эта страница носит исключительно технический характер и предназначена для подготовки технической документации.</p><section class="technical-note"><h3>Базовая оценка для AdMob и ZodinS</h3><p>На эту цену умножаются коэффициенты юнитов. В рабочей системе она рассчитывается и поступает из 1С. Здесь данные доступны только для просмотра; в прототипе для каждой страны и формата показано $1.00.</p><div class="technical-scroll"><table class="technical-table"><thead><tr><th>Страна</th><th>Формат</th><th>Цена</th></tr></thead><tbody>${rows || '<tr><td colspan="3">Форматы приложения пока не указаны</td></tr>'}</tbody></table></div></section></div>`;
 }
 
 function waterfallRowsMarkup(rows, mode) {
@@ -212,8 +197,8 @@ function waterfallRowsMarkup(rows, mode) {
     const basePrice = Number(row.basePrice) > 0 ? Number(row.basePrice) : 1;
     const effectivePrice = row.effectivePrice ?? Number(row.price) * (row.priceKind === 'multiplier' ? basePrice : 1);
     const price = Number(row.price) > 0 ? `$${Number(effectivePrice).toFixed(2)}` : '—';
-    const calculation = row.priceKind === 'multiplier' && Number(row.price) > 0 ? `<small>$${basePrice.toFixed(2)} × x${Number(row.price).toFixed(2)}</small>` : '';
-    return `<div class="waterfall-step ${row.paused || row.networkDisabled ? 'is-paused' : row.pending ? 'is-pending' : ''}"><span class="waterfall-step-number">${number}</span><div class="waterfall-step-source"><strong>${uiEscape(row.network)}</strong><small>${row.unitId ? `unit_id ${uiEscape(row.unitId)}` : 'unit_id появится после синхронизации'}</small></div><div class="waterfall-step-price"><strong>${price}</strong>${calculation}</div><span class="waterfall-step-status">${status ? uiEscape(status) : 'В конфигурации'}</span></div>`;
+    const calculation = row.priceKind === 'multiplier' && Number(row.price) > 0 ? `$${basePrice.toFixed(2)} × x${Number(row.price).toFixed(2)}` : '';
+    return `<div class="waterfall-step ${row.paused || row.networkDisabled ? 'is-paused' : row.pending ? 'is-pending' : ''}" title="${uiEscape(status || 'В конфигурации')}"><span class="waterfall-step-number">${number}</span><strong class="waterfall-step-source">${uiEscape(row.network)}</strong><strong class="waterfall-step-price">${price}</strong><span class="waterfall-step-calculation">${calculation}</span></div>`;
   }).join('')}</div>`;
 }
 
@@ -417,17 +402,6 @@ document.addEventListener('change', (event) => {
   if (event.target.id === 'waterfall-format') {
     uiState.waterfallFormat = event.target.value;
     renderWaterfall(app);
-  } else if (event.target.matches('[data-technical-price]')) {
-    const { country, format } = event.target.dataset;
-    if (!window.presetUI.countrySelection(app).countries.includes(country) || !technicalFormats(app).includes(format)) return;
-    const price = Number(event.target.value);
-    if (!Number.isFinite(price) || price <= 0) { renderTechnical(app); showUiToast('Укажите цену больше нуля'); return; }
-    technicalStore(app)[country] ||= {};
-    technicalStore(app)[country][format] = price;
-    saveTechnicalStore(app);
-    window.recordAppEdit(app);
-    renderTechnical(app);
-    renderWaterfall(app);
   } else if (event.target.matches('[data-app-field]')) {
     app[event.target.dataset.appField] = event.target.value;
     window.recordAppEdit(app);
@@ -452,9 +426,6 @@ document.addEventListener('keydown', (event) => {
 window.addEventListener('hashchange', () => { renderRoute(); window.scrollTo(0, 0); });
 document.addEventListener('preset-change', () => { const app = appById(uiState.activeAppId); if (app) { renderNetworks(app); renderTechnical(app); if (uiState.activeTab === 'waterfall') renderWaterfall(app); } });
 window.onCountryListChange = (app, action, country) => {
-  if (action === 'delete') delete technicalStore(app)[country];
-  if (action === 'add') technicalStore(app)[country] ||= {};
-  saveTechnicalStore(app);
   if (uiState.activeAppId === app.id) { renderTechnical(app); if (uiState.activeTab === 'waterfall') renderWaterfall(app); }
 };
 window.onConfigurationChange = () => { const app = appById(uiState.activeAppId); if (app) window.presetUI.render?.(); if (app && uiState.activeTab === 'waterfall') renderWaterfall(app); if (app && uiState.activeTab === 'technical') renderTechnical(app); };
