@@ -42,6 +42,7 @@ function markWorkspaceDirty(app, allCountries = false) {
   workspace.dirty = true;
   workspace.revision++;
   for (const country of allCountries ? workspace.countries : [workspace.selectedCountry]) workspace.pendingCountries.add(country);
+  window.onNetworkSyncStateChange?.(app);
 }
 function networkIdentity(node) { return `${node.tableName}::${node.mode}`; }
 function rememberNetworkState(app, presetId) {
@@ -282,6 +283,22 @@ function changeNetwork(app, nodeKey) {
   renderPreset();
   document.dispatchEvent(new CustomEvent('preset-change'));
 }
+function changeNetworkGroup(app, nodeKey) {
+  const selected = findPresetNode(app, nodeKey);
+  if (!selected) return;
+  const nodes = allNodes(app).filter((node) => node.tableName === selected.tableName);
+  const restore = nodes.every((node) => node.status === 'disabled');
+  for (const node of nodes) {
+    if (restore) node.status = node.previousStatus || 'active';
+    else if (node.status !== 'disabled') { node.previousStatus = node.status; node.status = 'disabled'; }
+  }
+  markWorkspaceDirty(app, true);
+  presetState(app).validation = null;
+  window.recordAppEdit?.(app);
+  refreshPresetTable(app);
+  renderPreset();
+  document.dispatchEvent(new CustomEvent('preset-change'));
+}
 
 window.presetUI = {
   countrySelection(app) { const state = presetState(app); return { countries: [...state.countries], selected: state.selectedCountry }; },
@@ -354,6 +371,7 @@ window.presetUI = {
       workspace.dirty = workspace.pendingCountries.size > 0 || app.presetId !== presetId;
     }
     workspace.syncAttempt = null;
+    window.onNetworkSyncStateChange?.(app);
     if (app === currentPresetApp) renderPreset();
   },
   finishMediatorSync(app, presetId, network, entries) {
@@ -370,9 +388,9 @@ window.presetUI = {
     const param = name === 'Pangle' ? { label: 'Регион', options: ['EU', 'US', 'APAC'] } : name === 'Mintegral' ? { label: 'Тип трафика', options: ['In-app', 'Mixed'] } : null;
     return { accounts, param, accountLabel: node.account || 'Выберите аккаунт' };
   },
-  toggleNetwork(app, key) { changeNetwork(app, key); },
-  updateAccount(app, key, account) { const node = findPresetNode(app, key); if (node) { node.account = account; window.presetUI.markDirty(true); refreshPresetTable(app); renderPreset(); document.dispatchEvent(new CustomEvent('preset-change')); } },
-  updateParameter(app, key, value) { const node = findPresetNode(app, key); if (node) { node.parameter = value; window.presetUI.markDirty(true); refreshPresetTable(app); renderPreset(); document.dispatchEvent(new CustomEvent('preset-change')); } },
+  toggleNetwork(app, key) { changeNetworkGroup(app, key); },
+  updateAccount(app, key, account) { const selected = findPresetNode(app, key); if (selected) { for (const node of allNodes(app).filter((item) => item.tableName === selected.tableName)) node.account = account; window.presetUI.markDirty(true); refreshPresetTable(app); renderPreset(); document.dispatchEvent(new CustomEvent('preset-change')); } },
+  updateParameter(app, key, value) { const selected = findPresetNode(app, key); if (selected) { for (const node of allNodes(app).filter((item) => item.tableName === selected.tableName)) node.parameter = value; window.presetUI.markDirty(true); refreshPresetTable(app); renderPreset(); document.dispatchEvent(new CustomEvent('preset-change')); } },
   syncSelection(networkName) {
     if (!currentPresetApp) return;
     const state = presetState(currentPresetApp);

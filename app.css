@@ -65,6 +65,7 @@
 .detail-identifiers{display:flex;flex-wrap:wrap;gap:5px 13px;margin-top:7px}.store-id-button{padding:0;border:0;background:transparent;color:#777b7e;font:10px Consolas,Monaco,monospace;text-align:left;overflow-wrap:anywhere}.store-id-button:hover{color:#6e7a0c;text-decoration:underline}
 .detail-actions{display:flex;align-items:center;gap:8px;flex:none}
 .action-button{height:34px;padding:0 11px;border:1px solid #c7c2bf;border-radius:7px;background:#fffafa;color:#474846;font-size:11px;font-weight:700;white-space:nowrap}.action-button:hover{border-color:#cbda3e;background:#f7f9df}.action-button:disabled{opacity:.55;cursor:wait}
+.action-button.is-attention{border-color:#d7b837;background:#ffeb86;color:#584300;box-shadow:0 0 0 2px #ffeb864d}.action-button.is-attention:hover{background:#ffe467}
 .detail-tabs{display:flex;align-items:end;gap:16px;min-height:47px;margin-bottom:16px;border-bottom:1px solid #c7c2bf}
 .detail-tabs button{height:47px;padding:0 5px;border:0;border-bottom:2px solid transparent;background:transparent;color:#777b7e;font-size:12px;font-weight:700;white-space:nowrap}
 .detail-tabs button:hover{color:#25221f}.detail-tabs button.is-active{border-bottom-color:#cbda3e;color:#25221f}
@@ -115,7 +116,6 @@
 .connection-status{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:13px;font-size:10px;font-weight:700;white-space:nowrap}.connection-status i{width:7px;height:7px;border-radius:50%;background:currentColor}
 .connection-ok{background:#e5f4ec;color:#148466}.connection-pending{background:#fff2cf;color:#966400}.connection-working{background:#e8f7b9;color:#537800}.connection-off{background:#efedeb;color:#777b7e}
 .network-name-cell strong{display:block;font-size:12px}.network-name-cell small{display:block;margin-top:3px;color:#9a9791;font-size:10px}
-.network-mode{display:inline-block;margin-right:6px;color:#777b7e;font-weight:700}
 .networks-table tr.is-disabled{background:#f9f8f6}.networks-table tr.is-disabled .network-name-cell strong{color:#777b7e}
 .toggle-switch{position:relative;width:34px;height:19px;padding:0;border:0;border-radius:10px;background:#d4d0cc;vertical-align:middle}
 .toggle-switch::after{content:"";position:absolute;top:3px;left:3px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 2px #0002;transition:transform .15s ease}

@@ -156,15 +156,35 @@ function renderOverview(app) {
 
 function renderNetworks(app) {
   const nodes = window.presetUI.getNetworkRows(app);
-  document.querySelector('#networks-panel').innerHTML = `<div class="networks-card"><div class="card-heading"><h2>Состав сетей</h2><p>Сети выбранного пресета · аккаунты и App Key показаны на демо-данных</p></div><div class="networks-scroll"><table class="networks-table"><thead><tr><th>Сеть</th><th>Подключена</th><th>Аккаунт</th><th>Параметры</th><th>App Key</th><th>Placements</th><th>Статус</th></tr></thead><tbody>${nodes.map((node) => {
+  const groups = new Map();
+  for (const node of nodes) {
+    if (!groups.has(node.tableName)) groups.set(node.tableName, []);
+    groups.get(node.tableName).push(node);
+  }
+  document.querySelector('#networks-panel').innerHTML = `<div class="networks-card"><div class="card-heading"><h2>Состав сетей</h2><p>Сети выбранного пресета · аккаунты и App Key показаны на демо-данных</p></div><div class="networks-scroll"><table class="networks-table"><thead><tr><th>Сеть</th><th>Подключена</th><th>Аккаунт</th><th>Параметры</th><th>App Key</th><th>Placements</th><th>Статус</th></tr></thead><tbody>${[...groups.values()].map((group) => {
+    const node = group.find((item) => item.status !== 'disabled') || group[0];
     const meta = window.presetUI.networkMeta(node);
-    const enabled = node.status !== 'disabled';
-    const intersection = node.selectedFormats.filter((format) => appSupportsFormat(app, format));
+    const enabled = group.some((item) => item.status !== 'disabled');
+    const status = group.some((item) => item.status === 'active') ? 'active' : node.status;
+    const account = group.find((item) => item.account)?.account || '';
+    const parameter = group.find((item) => item.parameter)?.parameter || '';
+    const intersection = [...new Set(group.flatMap((item) => item.selectedFormats))].filter((format) => appSupportsFormat(app, format));
     const accounts = [...new Set(meta.accounts)];
     const sync = window.presetUI.connectionStatus(app, node);
-    return `<tr class="${enabled ? '' : 'is-disabled'}"><td class="network-name-cell"><strong>${uiEscape(node.tableName)}</strong><small>${node.mode ? `<span class="network-mode">${node.mode === 'bidding' ? 'Bidding' : 'Waterfall'}</span>` : ''}<span class="status-pill status-${node.status}">${PRESET_STATUS_LABELS[node.status]}</span></small></td><td><button type="button" class="toggle-switch" role="switch" aria-checked="${enabled}" aria-label="${enabled ? 'Отключить' : 'Включить'} ${uiEscape(node.tableName)}" data-toggle-network="${node.key}"></button></td><td><select class="account-select ${node.account ? '' : 'is-placeholder'}" data-account-network="${node.key}" aria-label="Аккаунт ${uiEscape(node.tableName)}" ${enabled ? '' : 'disabled'}><option value="" ${node.account ? '' : 'selected'} disabled>Выберите аккаунт</option>${accounts.map((account) => `<option value="${uiEscape(account)}" ${node.account === account ? 'selected' : ''}>${uiEscape(account)}</option>`).join('')}</select></td><td>${meta.param ? `<select class="special-select" data-param-network="${node.key}" aria-label="${meta.param.label} ${uiEscape(node.tableName)}" ${enabled ? '' : 'disabled'}><option value="" ${node.parameter ? '' : 'selected'} disabled>Выберите параметр</option>${meta.param.options.map((option) => `<option ${node.parameter === option ? 'selected' : ''}>${uiEscape(option)}</option>`).join('')}</select>` : '<span class="param-muted">—</span>'}</td><td><span class="network-key">${uiEscape(node.appKey)}</span></td><td><div class="network-placement-list">${intersection.length ? intersection.map((format) => `<span>${uiEscape(format)}</span>`).join('') : '<span>Нет выбранных форматов</span>'}</div></td><td><span class="connection-status connection-${sync.kind}"><i aria-hidden="true"></i>${sync.label}</span></td></tr>`;
+    return `<tr class="${enabled ? '' : 'is-disabled'}"><td class="network-name-cell"><strong>${uiEscape(node.tableName)}</strong><small><span class="status-pill status-${status}">${PRESET_STATUS_LABELS[status]}</span></small></td><td><button type="button" class="toggle-switch" role="switch" aria-checked="${enabled}" aria-label="${enabled ? 'Отключить' : 'Включить'} ${uiEscape(node.tableName)}" data-toggle-network="${node.key}"></button></td><td><select class="account-select ${account ? '' : 'is-placeholder'}" data-account-network="${node.key}" aria-label="Аккаунт ${uiEscape(node.tableName)}" ${enabled ? '' : 'disabled'}><option value="" ${account ? '' : 'selected'} disabled>Выберите аккаунт</option>${accounts.map((option) => `<option value="${uiEscape(option)}" ${account === option ? 'selected' : ''}>${uiEscape(option)}</option>`).join('')}</select></td><td>${meta.param ? `<select class="special-select" data-param-network="${node.key}" aria-label="${meta.param.label} ${uiEscape(node.tableName)}" ${enabled ? '' : 'disabled'}><option value="" ${parameter ? '' : 'selected'} disabled>Выберите параметр</option>${meta.param.options.map((option) => `<option ${parameter === option ? 'selected' : ''}>${uiEscape(option)}</option>`).join('')}</select>` : '<span class="param-muted">—</span>'}</td><td><span class="network-key">${uiEscape(node.appKey)}</span></td><td><div class="network-placement-list">${intersection.length ? intersection.map((format) => `<span>${uiEscape(format)}</span>`).join('') : '<span>Нет выбранных форматов</span>'}</div></td><td><span class="connection-status connection-${sync.kind}"><i aria-hidden="true"></i>${sync.label}</span></td></tr>`;
   }).join('')}</tbody></table></div><div class="networks-footer">Последняя синхронизация: ${uiEscape(app.lastNetworkSync)} · Форматы сети пересечены с форматами приложения</div></div>`;
 }
+
+function updateNetworkSyncButton(app) {
+  if (uiState.activeAppId !== app.id) return;
+  const button = document.querySelector('#sync-networks');
+  if (!button) return;
+  const pending = Boolean(app.configWorkspace?.dirty);
+  button.classList.toggle('is-attention', pending);
+  button.title = pending ? 'Есть неотправленные изменения — синхронизируйте сети' : 'Синхронизация сетей';
+  button.setAttribute('aria-label', pending ? 'Sync Networks — есть неотправленные изменения' : 'Sync Networks');
+}
+window.onNetworkSyncStateChange = updateNetworkSyncButton;
 
 const TECHNICAL_PLACEMENT_NAMES = { Banner_native: 'Banner Native', Mrec: 'MREC', Mrec_native: 'MREC Native', App_open: 'App Open' };
 const TECHNICAL_FORMAT_ORDER = ['Banner', 'Banner Native', 'Interstitial', 'Rewarded', 'MREC', 'MREC Native', 'App Open', 'Native'];
@@ -239,6 +259,7 @@ function renderDetail(app, tab) {
   renderNetworks(app);
   renderWaterfall(app);
   renderTechnical(app);
+  updateNetworkSyncButton(app);
   document.querySelectorAll('[data-detail-tab]').forEach((button) => {
     const active = button.dataset.detailTab === tab;
     button.classList.toggle('is-active', active);
